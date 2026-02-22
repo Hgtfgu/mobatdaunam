@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Bốc Quẻ Đầu Năm</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:radial-gradient(circle,#8B0000,#330000);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    color:white;
+    overflow:hidden;
+}
+
+.box-wrapper{
+    width:200px;
+    height:400px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+}
+
+.box{
+    width:200px;
+    height:250px;
+    position:relative;
+    transform-origin:center;
+    transition:opacity 1s ease, transform 1s ease;
+}
+
+.box-body{
+    width:100%;
+    height:100%;
+    background:linear-gradient(#b8190b,#cc5f5f);
+    border-radius:20px;
+    position:absolute;
+    bottom:0;
+    box-shadow:0 20px 40px rgba(0,0,0,0.6);
+}
+
+.lid{
+    width:200px;
+    height:40px;
+    background:linear-gradient(#ffd700,#daa520);
+    position:absolute;
+    top:-10px;
+    border-radius:15px 15px 5px 5px;
+    transform-origin:bottom center;
+    transition:0.8s ease;
+}
+
+.open .lid{
+    transform:rotateX(-120deg);
+}
+
+
+.shake{
+    animation:shake 0.4s infinite;
+}
+
+@keyframes shake{
+    0%{ transform:rotate(0deg); }
+    25%{ transform:rotate(3deg); }
+    50%{ transform:rotate(-3deg); }
+    75%{ transform:rotate(2deg); }
+    100%{ transform:rotate(0deg); }
+}
+
+
+.fade-out{
+    opacity:0;
+    transform:scale(0.6);
+}
+
+.fortune-card{
+    width:340px;
+    min-height:220px;
+    background:#fff8dc;
+    color:black;
+    border-radius:15px;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 25px 60px rgba(0,0,0,0.6);
+
+    position:fixed;
+    left:50%;
+    top:33%; /* cao hơn trung tâm */
+    transform:translateX(-50%) scale(0.7);
+    opacity:0;
+}
+
+.show-card{
+    animation:fadeInCard 1.6s forwards ease-out;
+}
+
+@keyframes fadeInCard{
+    to{
+        opacity:1;
+        transform:translateX(-50%) scale(1);
+    }
+}
+
+button{
+    margin-top:40px;
+    padding:10px 25px;
+    border:none;
+    border-radius:10px;
+    background:gold;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🔮 BỐC QUẺ ĐẦU NĂM 🔮</h1>
+
+<div class="box-wrapper" id="wrapper">
+    <div class="box" id="box">
+        <div class="lid"></div>
+        <div class="box-body"></div>
+    </div>
+</div>
+
+<button onclick="drawFortune()" id="drawBtn">Xóc Hộp</button>
+<button onclick="resetGame()">Reset</button>
+
+<script>
+
+const fortunes = [
+{ name:"Quẻ Đại Cát", content:"Vận khí cực thịnh. Công việc thăng tiến nhanh, quý nhân phù trợ." },
+{ name:"Quẻ Tài Lộc", content:"Tiền bạc hanh thông. Có cơ hội tăng thu nhập bất ngờ." },
+{ name:"Quẻ Khởi Sắc", content:"Giai đoạn đầu chậm nhưng giữa năm bứt phá mạnh." },
+{ name:"Quẻ Bình An", content:"Không biến động lớn. Ổn định là chìa khóa." },
+{ name:"Quẻ Thử Thách", content:"Khó khăn xuất hiện nhưng vượt qua sẽ trưởng thành vượt bậc." },
+{ name:"Quẻ Tình Duyên", content:"Nhân duyên nở rộ. Người độc thân dễ gặp đúng người." },
+{ name:"Quẻ Đột Phá", content:"Một quyết định táo bạo sẽ thay đổi cục diện." },
+{ name:"Quẻ Ẩn Nhẫn", content:"Kiên trì âm thầm sẽ đem lại thành công cuối năm." },
+{ name:"Quẻ Học Hành", content:"Phù hợp nâng cao kiến thức, thi cử thuận lợi." },
+{ name:"Quẻ Cảnh Giác", content:"Tránh đầu tư rủi ro cao. Cẩn trọng giấy tờ." },
+{ name:"Quẻ Quý Nhân", content:"Có người giúp đỡ bất ngờ vào thời điểm quan trọng." },
+{ name:"Quẻ Thăng Tiến", content:"Cơ hội tăng chức hoặc mở rộng kinh doanh." },
+{ name:"Quẻ Tích Lũy", content:"Chưa bùng nổ nhưng tích lũy dài hạn rất tốt." },
+{ name:"Quẻ Cải Tổ", content:"Nên thay đổi môi trường hoặc phương pháp làm việc." },
+{ name:"Quẻ May Mắn", content:"Những việc nhỏ mang lại lợi ích lớn." },
+{ name:"Quẻ Khai Phá", content:"Phù hợp bắt đầu dự án mới." },
+{ name:"Quẻ Trì Hoãn", content:"Một số kế hoạch nên lùi lại để thời điểm tốt hơn." },
+{ name:"Quẻ Thịnh Vượng", content:"Tài vận tăng mạnh vào nửa cuối năm." },
+{ name:"Quẻ Hòa Hợp", content:"Gia đình và các mối quan hệ ổn định." },
+{ name:"Quẻ Nỗ Lực", content:"Chỉ cần chăm chỉ, kết quả chắc chắn đến." },
+{ name:"Quẻ Sáng Suốt", content:"Quyết định dựa trên lý trí sẽ giúp bạn thắng thế." },
+{ name:"Quẻ Lội Ngược Dòng", content:"Khó khăn nhưng bạn đủ bản lĩnh vượt qua." },
+{ name:"Quẻ Bất Ngờ", content:"Có biến chuyển nhanh, cần linh hoạt thích nghi." },
+{ name:"Quẻ Vững Chắc", content:"Đầu tư dài hạn sẽ sinh lợi tốt." },
+{ name:"Quẻ Tái Sinh", content:"Cơ hội làm lại từ đầu với kết quả tốt hơn." },
+{ name:"Quẻ Tài Trí", content:"Sử dụng kỹ năng chuyên môn sẽ tạo lợi thế lớn." },
+{ name:"Quẻ Cạnh Tranh", content:"Cạnh tranh cao nhưng bạn có ưu thế." },
+{ name:"Quẻ Tự Chủ", content:"Năm nay phụ thuộc chính bạn, không nên trông chờ ai." },
+{ name:"Quẻ Thử Lửa", content:"Áp lực cao nhưng giúp bạn nâng tầm bản thân." },
+{ name:"Quẻ Lộc Nhỏ", content:"Lợi nhuận nhỏ nhưng đều đặn." },
+{ name:"Quẻ Bền Bỉ", content:"Kiên trì đến cuối năm sẽ đạt kết quả như mong muốn." },
+{ name:"Quẻ Thận Trọng", content:"Tránh ký kết quan trọng vào đầu năm." },
+{ name:"Quẻ Phát Triển", content:"Mở rộng quan hệ sẽ mang lại cơ hội lớn." },
+{ name:"Quẻ Thu Hoạch", content:"Công sức trước đây bắt đầu cho quả ngọt." },
+{ name:"Quẻ Thời Cơ", content:"Nắm bắt đúng thời điểm sẽ thắng lớn." },
+{ name:"Quẻ Hồi Phục", content:"Sức khỏe và tinh thần được cải thiện rõ rệt." },
+{ name:"Quẻ Tài Chính", content:"Có cơ hội đầu tư sinh lời nhưng cần phân tích kỹ." },
+{ name:"Quẻ Tình Thân", content:"Gia đình là nguồn động lực lớn." },
+{ name:"Quẻ Đổi Hướng", content:"Chuyển hướng công việc sẽ tốt hơn duy trì cũ." },
+{ name:"Quẻ Nhẫn Nại", content:"Không nên nóng vội, thành công đến chậm." },
+{ name:"Quẻ Lãnh Đạo", content:"Bạn có cơ hội dẫn dắt người khác." },
+{ name:"Quẻ Gieo Hạt", content:"Những gì bắt đầu năm nay sẽ nở rộ năm sau." },
+{ name:"Quẻ Đầu Tư", content:"Phù hợp học hỏi kỹ năng mới." },
+{ name:"Quẻ Bứt Phá", content:"Tháng giữa năm có bước nhảy vọt." },
+{ name:"Quẻ Kiểm Soát", content:"Quản lý chi tiêu sẽ tránh hao hụt." },
+{ name:"Quẻ Ổn Định", content:"Giữ nguyên chiến lược hiện tại là tốt nhất." },
+{ name:"Quẻ Thăng Hoa", content:"Tình cảm đạt đỉnh cao." },
+{ name:"Quẻ Cơ Hội Vàng", content:"Một cơ hội hiếm xuất hiện, cần quyết đoán." },
+{ name:"Quẻ Nội Lực", content:"Sức mạnh bên trong là chìa khóa năm nay." },
+{ name:"Quẻ Thành Tựu", content:"Cuối năm đạt được mục tiêu lớn." },
+{ name:"Quẻ Thử Nghiệm", content:"Nên thử điều mới thay vì lặp lại cách cũ." },
+{ name:"Quẻ Đại Phúc", content:"Tổng vận hanh thông, nhiều tin vui liên tiếp." }
+];
+
+let usedIndexes=[];
+let currentCard=null;
+
+function drawFortune(){
+
+    if(usedIndexes.length===52){
+        alert("Bạn đã bốc hết 52 quẻ.");
+        return;
+    }
+
+    const wrapper=document.getElementById("wrapper");
+    const box=document.getElementById("box");
+    const btn=document.getElementById("drawBtn");
+
+    btn.disabled=true;
+
+    wrapper.classList.add("shake");
+
+    setTimeout(()=>{
+
+        wrapper.classList.remove("shake");
+
+        box.classList.add("open");
+
+        setTimeout(()=>{
+
+            box.classList.add("fade-out");
+
+            let r;
+            do{
+                r=Math.floor(Math.random()*52);
+            }while(usedIndexes.includes(r));
+
+            usedIndexes.push(r);
+            const f=fortunes[r];
+
+            currentCard=document.createElement("div");
+            currentCard.className="fortune-card";
+            currentCard.innerHTML=
+                `<h2>${f.name}</h2>
+                 <p>${f.content}</p>`;
+
+            document.body.appendChild(currentCard);
+
+            setTimeout(()=>{
+                currentCard.classList.add("show-card");
+            },100);
+
+        },800);
+
+    },2000);
+}
+
+/* ===== RESET ===== */
+function resetGame(){
+
+    const box=document.getElementById("box");
+
+    usedIndexes=[];
+    box.classList.remove("open","fade-out");
+
+    if(currentCard){
+        currentCard.remove();
+        currentCard=null;
+    }
+
+    document.getElementById("drawBtn").disabled=false;
+}
+
+</script>
+
+</body>
+</html>
